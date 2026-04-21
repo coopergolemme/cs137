@@ -1,0 +1,101 @@
+Device: cuda
+Loading model...
+Loading validation dataset (2020)...
+Initialized WeatherDataset with 8784 samples for years ['2020']
+Computing saliency over up to 200 valid samples...
+  processed 2/200 samples  processed 6/200 samples  processed 14/200 samples  processed 16/200 samples  processed 20/200 samples  processed 28/200 samples  processed 30/200 samples  processed 34/200 samples  processed 42/200 samples  processed 44/200 samples  processed 48/200 samples  processed 56/200 samples  processed 58/200 samples  processed 62/200 samples  processed 70/200 samples  processed 72/200 samples  processed 76/200 samples  processed 84/200 samples  processed 86/200 samples  processed 90/200 samples  processed 98/200 samples  processed 100/200 samples  processed 104/200 samples  processed 112/200 samples  processed 114/200 samples  processed 118/200 samples  processed 126/200 samples  processed 128/200 samples  processed 132/200 samples  processed 140/200 samples  processed 142/200 samples  processed 146/200 samples  processed 154/200 samples  processed 156/200 samples  processed 160/200 samples  processed 168/200 samples  processed 170/200 samples  processed 174/200 samples  processed 182/200 samples  processed 184/200 samples  processed 188/200 samples  processed 196/200 samples  processed 198/200 samples  processed 202/200 samples
+Plotting...
+Saved /cluster/tufts/c26sp1cs0137/cgolem01/saliency_spatial.png
+Saved /cluster/tufts/c26sp1cs0137/cgolem01/saliency_channels.png
+Saved /cluster/tufts/c26sp1cs0137/cgolem01/saliency_top_channels.png
+Saved /cluster/tufts/c26sp1cs0137/cgolem01/saliency_upstream.png
+
+============================================================
+CHANNEL SENSITIVITY RANKINGS (top 10 per output)
+============================================================
+
+[TMP@2m (Temperature)]
+   1. APCP_1hr                   score=0.3266
+   2. VIL                        score=0.1485
+   3. VGRD@10m                   score=0.0515
+   4. GUST                       score=0.0456
+   5. UGRD@10m                   score=0.0415
+   6. VGRD@1000                  score=0.0408
+   7. UGRD@1000                  score=0.0375
+   8. VGRD@850                   score=0.0338
+   9. TMP@500                    score=0.0277
+  10. UGRD@700                   score=0.0266
+
+[RH@2m (Rel. Humidity)]
+   1. APCP_1hr                   score=0.4790
+   2. VIL                        score=0.1584
+   3. GUST                       score=0.0729
+   4. UGRD@10m                   score=0.0654
+   5. UGRD@1000                  score=0.0597
+   6. VGRD@10m                   score=0.0585
+   7. VGRD@1000                  score=0.0489
+   8. VGRD@850                   score=0.0369
+   9. UGRD@700                   score=0.0339
+  10. UGRD@925                   score=0.0299
+
+[UGRD@10m (U-wind)]
+   1. APCP_1hr                   score=0.4983
+   2. VIL                        score=0.1383
+   3. GUST                       score=0.0628
+   4. VGRD@10m                   score=0.0625
+   5. UGRD@10m                   score=0.0585
+   6. UGRD@1000                  score=0.0576
+   7. VGRD@1000                  score=0.0537
+   8. UGRD@700                   score=0.0346
+   9. VGRD@850                   score=0.0341
+  10. UGRD@925                   score=0.0332
+
+[VGRD@10m (V-wind)]
+   1. APCP_1hr                   score=0.5502
+   2. VIL                        score=0.2133
+   3. VGRD@10m                   score=0.0847
+   4. GUST                       score=0.0716
+   5. UGRD@10m                   score=0.0692
+   6. UGRD@1000                  score=0.0685
+   7. VGRD@850                   score=0.0603
+   8. VGRD@1000                  score=0.0580
+   9. UGRD@700                   score=0.0462
+  10. TMP@500                    score=0.0377
+
+[GUST (Wind Gust)]
+   1. APCP_1hr                   score=0.4068
+   2. VIL                        score=0.1346
+   3. VGRD@10m                   score=0.0600
+   4. GUST                       score=0.0513
+   5. UGRD@10m                   score=0.0474
+   6. UGRD@1000                  score=0.0445
+   7. VGRD@1000                  score=0.0432
+   8. VGRD@850                   score=0.0367
+   9. UGRD@700                   score=0.0303
+  10. UGRD@925                   score=0.0301
+
+[APCP (Precipitation)]
+   1. APCP_1hr                   score=0.0313
+   2. VIL                        score=0.0099
+   3. GUST                       score=0.0047
+   4. UGRD@10m                   score=0.0046
+   5. UGRD@1000                  score=0.0041
+   6. VGRD@10m                   score=0.0038
+   7. VGRD@1000                  score=0.0031
+   8. VGRD@850                   score=0.0024
+   9. UGRD@700                   score=0.0023
+  10. UGRD@925                   score=0.0020
+
+[Binary (Extreme Event)]
+   1. APCP_1hr                   score=0.5913
+   2. VIL                        score=0.1614
+   3. UGRD@10m                   score=0.0790
+   4. GUST                       score=0.0756
+   5. VGRD@10m                   score=0.0606
+   6. UGRD@1000                  score=0.0545
+   7. VGRD@1000                  score=0.0509
+   8. VGRD@850                   score=0.0403
+   9. UGRD@925                   score=0.0340
+  10. TMP@500                    score=0.0338
+
+All figures saved.

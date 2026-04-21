@@ -1,0 +1,73 @@
+Using device: cuda
+Loading datasets...
+Initialized WeatherDataset with 12888 samples for years ['2018', '2019']
+Initialized WeatherDataset with 8784 samples for years ['2020']
+Detected input channels: 42
+Epoch [1/30] - Train Total Loss: 1.9313 | Base MSE: 0.7395 | APCP MSE: 4.8678 | BCE: 0.0114
+Epoch [1/30] - Val Total Loss: 2.1000
+Metrics -> True scale Base RMSE: 7.7773 | True scale APCP RMSE: 3.7095 | Val AUC: 0.6103
+Saved new best model to /cluster/tufts/c26sp1cs0137/cgolem01/best_model_0.6103.pth
+Epoch [2/30] - Train Total Loss: 2.0886 | Base MSE: 0.6617 | APCP MSE: 4.5748 | BCE: 0.0138
+Epoch [2/30] - Val Total Loss: 2.0597
+Metrics -> True scale Base RMSE: 7.8625 | True scale APCP RMSE: 3.5348 | Val AUC: 0.6354
+Saved new best model to /cluster/tufts/c26sp1cs0137/cgolem01/best_model_0.6354.pth
+Epoch [3/30] - Train Total Loss: 1.9870 | Base MSE: 0.6404 | APCP MSE: 4.2663 | BCE: 0.0130
+Epoch [3/30] - Val Total Loss: 2.3681
+Metrics -> True scale Base RMSE: 7.6413 | True scale APCP RMSE: 3.2666 | Val AUC: 0.6279
+Early stopping patience: 1/8
+Epoch [4/30] - Train Total Loss: 2.0306 | Base MSE: 0.6238 | APCP MSE: 3.8723 | BCE: 0.0137
+Epoch [4/30] - Val Total Loss: 2.3663
+Metrics -> True scale Base RMSE: 7.6795 | True scale APCP RMSE: 3.0416 | Val AUC: 0.6237
+Early stopping patience: 2/8
+Epoch [5/30] - Train Total Loss: 2.0055 | Base MSE: 0.6004 | APCP MSE: 3.4906 | BCE: 0.0137
+Epoch [5/30] - Val Total Loss: 2.4963
+Metrics -> True scale Base RMSE: 7.4113 | True scale APCP RMSE: 2.8313 | Val AUC: 0.6133
+Early stopping patience: 3/8
+Epoch [6/30] - Train Total Loss: 1.9057 | Base MSE: 0.5861 | APCP MSE: 3.2151 | BCE: 0.0129
+Epoch [6/30] - Val Total Loss: 2.5051
+Metrics -> True scale Base RMSE: 7.5873 | True scale APCP RMSE: 2.6776 | Val AUC: 0.6530
+Saved new best model to /cluster/tufts/c26sp1cs0137/cgolem01/best_model_0.6530.pth
+Epoch [7/30] - Train Total Loss: 2.0074 | Base MSE: 0.5730 | APCP MSE: 2.9868 | BCE: 0.0141
+Epoch [7/30] - Val Total Loss: 2.7742
+Metrics -> True scale Base RMSE: 7.4795 | True scale APCP RMSE: 2.6127 | Val AUC: 0.6161
+Early stopping patience: 1/8
+Epoch [8/30] - Train Total Loss: 1.9575 | Base MSE: 0.5702 | APCP MSE: 2.8337 | BCE: 0.0136
+Epoch [8/30] - Val Total Loss: 2.3042
+Metrics -> True scale Base RMSE: 7.4072 | True scale APCP RMSE: 2.5673 | Val AUC: 0.7232
+Saved new best model to /cluster/tufts/c26sp1cs0137/cgolem01/best_model_0.7232.pth
+Epoch [9/30] - Train Total Loss: 2.0267 | Base MSE: 0.5530 | APCP MSE: 2.7687 | BCE: 0.0145
+Epoch [9/30] - Val Total Loss: 2.8156
+Metrics -> True scale Base RMSE: 7.8219 | True scale APCP RMSE: 2.4733 | Val AUC: 0.6004
+Early stopping patience: 1/8
+Epoch [10/30] - Train Total Loss: 1.9258 | Base MSE: 0.5483 | APCP MSE: 2.6263 | BCE: 0.0135
+Epoch [10/30] - Val Total Loss: 2.4521
+Metrics -> True scale Base RMSE: 7.6237 | True scale APCP RMSE: 2.4179 | Val AUC: 0.7112
+Early stopping patience: 2/8
+Epoch [11/30] - Train Total Loss: 1.9423 | Base MSE: 0.5352 | APCP MSE: 2.5216 | BCE: 0.0138
+Epoch [11/30] - Val Total Loss: 3.0148
+Metrics -> True scale Base RMSE: 7.7160 | True scale APCP RMSE: 2.3947 | Val AUC: 0.6005
+Early stopping patience: 3/8
+Epoch [12/30] - Train Total Loss: 1.9446 | Base MSE: 0.5286 | APCP MSE: 2.5106 | BCE: 0.0139
+Epoch [12/30] - Val Total Loss: 2.5288
+Metrics -> True scale Base RMSE: 7.6552 | True scale APCP RMSE: 2.3355 | Val AUC: 0.6576
+Early stopping patience: 4/8
+Epoch [13/30] - Train Total Loss: 2.0106 | Base MSE: 0.5232 | APCP MSE: 2.5103 | BCE: 0.0146
+Epoch [13/30] - Val Total Loss: 2.6679
+Metrics -> True scale Base RMSE: 7.6227 | True scale APCP RMSE: 2.4274 | Val AUC: 0.7254
+Saved new best model to /cluster/tufts/c26sp1cs0137/cgolem01/best_model_0.7254.pth
+Epoch [14/30] - Train Total Loss: 1.9447 | Base MSE: 0.5112 | APCP MSE: 2.5899 | BCE: 0.0141
+Epoch [14/30] - Val Total Loss: 2.9517
+Metrics -> True scale Base RMSE: 7.4999 | True scale APCP RMSE: 2.4060 | Val AUC: 0.6567
+Early stopping patience: 1/8
+Epoch [15/30] - Train Total Loss: 1.9326 | Base MSE: 0.5098 | APCP MSE: 2.4935 | BCE: 0.0140
+Epoch [15/30] - Val Total Loss: 3.2588
+Metrics -> True scale Base RMSE: 7.9753 | True scale APCP RMSE: 2.3697 | Val AUC: 0.5992
+Early stopping patience: 2/8
+Epoch [16/30] - Train Total Loss: 1.9385 | Base MSE: 0.4980 | APCP MSE: 2.4944 | BCE: 0.0142
+Epoch [16/30] - Val Total Loss: 3.1560
+Metrics -> True scale Base RMSE: 7.7250 | True scale APCP RMSE: 2.4168 | Val AUC: 0.5943
+Early stopping patience: 3/8
+Epoch [17/30] - Train Total Loss: 1.9538 | Base MSE: 0.4976 | APCP MSE: 2.4662 | BCE: 0.0143
+Epoch [17/30] - Val Total Loss: 3.2270
+Metrics -> True scale Base RMSE: 7.5318 | True scale APCP RMSE: 2.4917 | Val AUC: 0.6414
+Early stopping patience: 4/8

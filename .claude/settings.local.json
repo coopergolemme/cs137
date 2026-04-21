@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python3 -c \"import json; d=json.load\\(open\\('/cluster/tufts/c26sp1cs0137/cgolem01/metrics.json'\\)\\); print\\(f'Epochs: {len\\(d\\)}, last: {d[-1]}'\\)\")",
+      "Bash(ls /cluster/tufts/c26sp1cs0137/cgolem01/saliency_*.png)",
+      "Bash(python3.6 -c ' *)"
+    ]
+  }
+}

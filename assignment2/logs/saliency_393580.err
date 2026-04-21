@@ -1,0 +1,12 @@
+/cluster/tufts/c26sp1cs0137/cgolem01/saliency_analysis.py:77: UserWarning: The .grad attribute of a Tensor that is not a leaf Tensor is being accessed. Its .grad attribute won't be populated during autograd.backward(). If you indeed want the .grad field to be populated for a non-leaf Tensor, use .retain_grad() on the non-leaf Tensor. If you access the non-leaf Tensor by mistake, make sure you access the leaf Tensor instead. See github.com/pytorch/pytorch/pull/30531 for more informations. (Triggered internally at /pytorch/build/aten/src/ATen/core/TensorBody.h:489.)
+  return x.grad.detach().abs()   # (B, C, H, W)
+Traceback (most recent call last):
+  File "/cluster/tufts/c26sp1cs0137/cgolem01/saliency_analysis.py", line 319, in <module>
+    main()
+  File "/cluster/tufts/c26sp1cs0137/cgolem01/saliency_analysis.py", line 306, in main
+    avg_sal, sample_input = accumulate_saliency(model, loader, N_SAMPLES)
+  File "/cluster/tufts/c26sp1cs0137/cgolem01/saliency_analysis.py", line 103, in accumulate_saliency
+    sal = compute_saliency(model, x, out_idx)   # (B, C, H, W)
+  File "/cluster/tufts/c26sp1cs0137/cgolem01/saliency_analysis.py", line 77, in compute_saliency
+    return x.grad.detach().abs()   # (B, C, H, W)
+AttributeError: 'NoneType' object has no attribute 'detach'
