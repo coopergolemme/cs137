@@ -39,16 +39,16 @@ CONFIG = {
     "cnn_channels": [32, 64],  # CNN intermediate channels (2-layer feature extractor)
     "num_transformer_layers": 4,   # HybridCNNTransformer only (kept for compat)
     "spatial_layers": 2,       # HierarchicalCNNTransformer: depth of per-hour spatial transformer
-    "temporal_layers": 6,      # HierarchicalCNNTransformer: depth of temporal transformer
+    "temporal_layers": 4,      # HierarchicalCNNTransformer: depth of temporal transformer
     "num_heads": 8,
-    "transformer_dropout": 0.25,
+    "transformer_dropout": 0.35,
     "mlp_hidden_dim": 256,     # prediction-head hidden size
 
     # ── Training ────────────────────────────────────────────────────────────
     # sequence length = (S+24)*(P+1) = 96*26 = 2496 tokens.
     "lr": 3e-4,
     "lr_min": 1e-5,     # cosine annealing floor
-    "weight_decay": 1e-2,
+    "weight_decay": 5e-2,
     "batch_size": 16,
     "num_epochs": 50,
     "gradient_clip": 1.0,
