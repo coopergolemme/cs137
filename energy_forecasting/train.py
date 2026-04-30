@@ -122,11 +122,15 @@ def train(config: dict = None):
     n_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
     print(f"  Trainable parameters: {n_params:,}")
 
-    seq_len = (config["S"] + 24) * (config["P"] + 1)
-    print(f"  Transformer sequence length: {seq_len:,} tokens")
-    if seq_len > 5000:
-        print("  WARNING: long sequence — consider reducing S or grid_size "
-              "if you hit OOM errors.")
+    if config.get("model_type", "hybrid") == "hierarchical":
+        print(f"  Spatial seq len: {config['P']} tokens  |  "
+              f"Temporal seq len: {config['S'] + 24} tokens")
+    else:
+        seq_len = (config["S"] + 24) * (config["P"] + 1)
+        print(f"  Transformer sequence length: {seq_len:,} tokens")
+        if seq_len > 5000:
+            print("  WARNING: long sequence — consider reducing S or grid_size "
+                  "if you hit OOM errors.")
 
     # ── Optimiser and loss ────────────────────────────────────────────────────
     optimiser = torch.optim.AdamW(

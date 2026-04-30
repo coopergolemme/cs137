@@ -34,9 +34,12 @@ CONFIG = {
     "num_calendar_features": 8,
 
     # ── Model architecture ──────────────────────────────────────────────────
+    "model_type": "hierarchical",  # "hybrid" or "hierarchical"
     "D": 128,                  # token embedding dimension
     "cnn_channels": [32, 64],  # CNN intermediate channels (2-layer feature extractor)
-    "num_transformer_layers": 4,
+    "num_transformer_layers": 4,   # HybridCNNTransformer only (kept for compat)
+    "spatial_layers": 2,       # HierarchicalCNNTransformer: depth of per-hour spatial transformer
+    "temporal_layers": 6,      # HierarchicalCNNTransformer: depth of temporal transformer
     "num_heads": 8,
     "transformer_dropout": 0.25,
     "mlp_hidden_dim": 256,     # prediction-head hidden size
@@ -55,10 +58,10 @@ CONFIG = {
     # ── Data paths ───────────────────────────────────────────────────────────
     "weather_base_path": f"{DATA_BASE}/weather_data",
     "demand_dir": f"{DATA_BASE}/energy_demand_data",
-    "train_years": [2019, 2020, 2021, 2022],
-    "val_years": [2023],
+    "train_years": [2019, 2020, 2021, 2023],
+    "val_years": [2022],
 
     # ── Checkpointing ────────────────────────────────────────────────────────
     "checkpoint_dir": "checkpoints/lookback",
-    "checkpoint_name": "best_model_lookback.pt",
+    "checkpoint_name": "Hierarchical_model.pt",
 }

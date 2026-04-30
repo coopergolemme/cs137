@@ -312,11 +312,237 @@ class HybridCNNTransformer(nn.Module):
         return self._denorm(pred_norm)                    # (B, 24, Z)  raw MWh
 
 
+# ─── Hierarchical CNN-Transformer ────────────────────────────────────────────
+
+class HierarchicalCNNTransformer(nn.Module):
+    """
+    Two-stage attention architecture for ISO-NE day-ahead energy demand forecasting.
+
+    Stage 1 — Spatial Transformer (per timestep):
+      CNN extracts P = G² spatial tokens per hour → small TransformerEncoder
+      runs across the P tokens independently for each timestep → mean-pool to
+      one weather-summary vector per timestep: (B, T, D).
+
+    Stage 2 — Temporal Transformer:
+      For each of the T = S+24 timesteps, add the weather summary to the
+      tabular token embedding, add timestep_pos, then run a deeper
+      TransformerEncoder across all T tokens.  The 24 future outputs go
+      through an MLP head → (B, 24, Z) predictions.
+    """
+
+    def __init__(self, config: dict):
+        super().__init__()
+
+        S     = config["S"]
+        Z     = config["Z"]
+        C     = config["C"]
+        D     = config["D"]
+        G     = config["grid_size"]
+        F_cal = config["num_calendar_features"]
+        P     = G * G
+        T     = S + 24
+
+        self.S     = S
+        self.Z     = Z
+        self.C     = C
+        self.D     = D
+        self.G     = G
+        self.P     = P
+        self.F_cal = F_cal
+
+        print(f"[Hierarchical] Spatial seq len: {P}, Temporal seq len: {T}")
+
+        # Demand normalisation — call set_demand_stats() before training.
+        self.register_buffer("demand_mean", torch.zeros(Z))
+        self.register_buffer("demand_std",  torch.ones(Z))
+
+        # ── Shared CNN backbone ──────────────────────────────────────────────
+        self.cnn = CNNFeatureExtractor(C, config["cnn_channels"], D)
+
+        # ── Tabular embedders ────────────────────────────────────────────────
+        tab_dim = Z + F_cal
+        self.hist_embedder   = nn.Linear(tab_dim, D)
+        self.future_embedder = nn.Linear(tab_dim, D)
+
+        # ── Positional embeddings ────────────────────────────────────────────
+        self.spatial_pos  = nn.Parameter(torch.empty(P, D))
+        self.timestep_pos = nn.Parameter(torch.empty(S + 24, D))
+        nn.init.trunc_normal_(self.spatial_pos,  std=0.02)
+        nn.init.trunc_normal_(self.timestep_pos, std=0.02)
+
+        # ── Stage 1: Spatial Transformer ─────────────────────────────────────
+        spatial_layer = nn.TransformerEncoderLayer(
+            d_model=D,
+            nhead=config["num_heads"],
+            dim_feedforward=config["mlp_hidden_dim"] * 2,
+            dropout=config["transformer_dropout"],
+            activation="gelu",
+            batch_first=True,
+            norm_first=True,
+        )
+        self.spatial_transformer = nn.TransformerEncoder(
+            spatial_layer, num_layers=config["spatial_layers"]
+        )
+
+        # ── Stage 2: Temporal Transformer ────────────────────────────────────
+        temporal_layer = nn.TransformerEncoderLayer(
+            d_model=D,
+            nhead=config["num_heads"],
+            dim_feedforward=config["mlp_hidden_dim"] * 2,
+            dropout=config["transformer_dropout"],
+            activation="gelu",
+            batch_first=True,
+            norm_first=True,
+        )
+        self.temporal_transformer = nn.TransformerEncoder(
+            temporal_layer, num_layers=config["temporal_layers"]
+        )
+
+        # ── Prediction head ──────────────────────────────────────────────────
+        self.head = nn.Sequential(
+            nn.Linear(D, config["mlp_hidden_dim"]),
+            nn.GELU(),
+            nn.Linear(config["mlp_hidden_dim"], Z),
+        )
+
+        self._init_weights()
+
+    # ── Initialisation ────────────────────────────────────────────────────────
+
+    def _init_weights(self):
+        for m in self.modules():
+            if isinstance(m, nn.Linear):
+                nn.init.xavier_uniform_(m.weight)
+                if m.bias is not None:
+                    nn.init.zeros_(m.bias)
+
+    # ── Demand normalisation helpers ─────────────────────────────────────────
+
+    def set_demand_stats(self, mean: torch.Tensor, std: torch.Tensor):
+        """Store z-score parameters computed from the training set."""
+        self.demand_mean.copy_(mean.to(self.demand_mean.device))
+        self.demand_std.copy_(std.to(self.demand_std.device))
+
+    def _norm(self, x):
+        return (x - self.demand_mean) / (self.demand_std + 1e-8)
+
+    def _denorm(self, x):
+        return x * (self.demand_std + 1e-8) + self.demand_mean
+
+    # ── Evaluation adapter ────────────────────────────────────────────────────
+
+    def adapt_inputs(
+        self,
+        history_weather:  torch.Tensor,   # (B, 168, 450, 449, C)
+        history_energy:   torch.Tensor,   # (B, 168, Z)
+        future_weather:   torch.Tensor,   # (B, 24, 450, 449, C)
+        future_time:      torch.Tensor,   # (B, 24) int64 hours-since-epoch
+    ) -> tuple:
+        """
+        Prepares raw evaluation inputs for forward().  Mirrors the feature
+        extraction that EnergyDataset.__getitem__ performs during training.
+        """
+        B = history_weather.size(0)
+        device = history_weather.device
+
+        # 1. Subsample history to last S hours
+        hist_weather = history_weather[:, -self.S:]   # (B, S, 450, 449, C)
+        hist_energy  = history_energy[:, -self.S:]    # (B, S, Z)
+
+        # 2. Spatial pooling for history weather
+        hist_weather   = self._pool_weather(hist_weather,   self.G)  # (B, S,  G, G, C)
+        future_weather = self._pool_weather(future_weather, self.G)  # (B, 24, G, G, C)
+
+        # 3. Calendar features — compute from hours-since-epoch
+        fut_hours = future_time.cpu().numpy().astype(np.int64)   # (B, 24)
+        hist_start_hours = fut_hours[:, 0:1] - self.S            # (B, 1)
+        hist_hours = hist_start_hours + np.arange(self.S)        # (B, S)
+
+        hist_cal   = np.stack([compute_calendar_features(hist_hours[b])
+                               for b in range(B)])               # (B, S, 7)
+        future_cal = np.stack([compute_calendar_features(fut_hours[b])
+                               for b in range(B)])               # (B, 24, 7)
+
+        hist_cal   = torch.from_numpy(hist_cal).to(device)    # (B, S, 7)
+        future_cal = torch.from_numpy(future_cal).to(device)  # (B, 24, 7)
+
+        # 4. Weekly lag: first 24 hours of the 168-h history = same wall-clock
+        #    hours as the forecast window, one week prior.
+        future_demand_lag = history_energy[:, :24, :].to(device)   # (B, 24, Z)
+
+        return hist_weather, hist_energy, hist_cal, future_weather, future_cal, future_demand_lag
+
+    @staticmethod
+    def _pool_weather(weather: torch.Tensor, grid_size: int) -> torch.Tensor:
+        """
+        Adaptive-average-pool a batch of weather maps from (H, W) to
+        (grid_size, grid_size).
+        """
+        B, T, H, W, C = weather.shape
+        x = weather.view(B * T, H, W, C).permute(0, 3, 1, 2)        # (B*T, C, H, W)
+        x = F.adaptive_avg_pool2d(x, (grid_size, grid_size))         # (B*T, C, G, G)
+        return x.permute(0, 2, 3, 1).view(B, T, grid_size, grid_size, C)
+
+    # ── Forward pass ──────────────────────────────────────────────────────────
+
+    def forward(
+        self,
+        hist_weather:      torch.Tensor,   # (B, S,  G, G, C)
+        hist_demand:       torch.Tensor,   # (B, S,  Z)   raw MWh
+        hist_calendar:     torch.Tensor,   # (B, S,  F)
+        future_weather:    torch.Tensor,   # (B, 24, G, G, C)
+        future_calendar:   torch.Tensor,   # (B, 24, F)
+        future_demand_lag: torch.Tensor,   # (B, 24, Z)   raw MWh, 168 h prior
+    ) -> torch.Tensor:                     # (B, 24, Z)   raw MWh (denormalised)
+        B = hist_weather.size(0)
+        T = self.S + 24
+
+        # ── CNN backbone (shared weights, all T timesteps) ───────────────────
+        weather = torch.cat([hist_weather, future_weather], dim=1)  # (B, T, G, G, C)
+        weather_flat = weather.view(B * T, self.G, self.G, self.C).permute(0, 3, 1, 2)
+        spatial_tokens = self.cnn(weather_flat)                     # (B*T, P, D)
+        spatial_tokens = spatial_tokens.view(B, T, self.P, self.D)  # (B, T, P, D)
+
+        # ── Stage 1: Spatial Transformer ─────────────────────────────────────
+        # Add spatial positional embeddings (same for every timestep).
+        spatial_tokens = spatial_tokens + self.spatial_pos[None, None, :, :]  # (B, T, P, D)
+
+        # Process each timestep's P tokens independently.
+        spatial_flat = spatial_tokens.view(B * T, self.P, self.D)  # (B*T, P, D)
+        spatial_out  = self.spatial_transformer(spatial_flat)       # (B*T, P, D)
+
+        # Mean-pool P tokens → one weather summary per timestep.
+        weather_summary = spatial_out.mean(dim=1).view(B, T, self.D)  # (B, T, D)
+
+        # ── Tabular embeddings ───────────────────────────────────────────────
+        hist_demand_norm = self._norm(hist_demand)
+        future_lag_norm  = self._norm(future_demand_lag)
+
+        hist_tab   = torch.cat([hist_demand_norm, hist_calendar],   dim=-1)  # (B, S,  Z+F)
+        future_tab = torch.cat([future_lag_norm,  future_calendar], dim=-1)  # (B, 24, Z+F)
+
+        hist_tab_emb   = self.hist_embedder(hist_tab)     # (B, S,  D)
+        future_tab_emb = self.future_embedder(future_tab) # (B, 24, D)
+        tab_emb = torch.cat([hist_tab_emb, future_tab_emb], dim=1)  # (B, T, D)
+
+        # ── Stage 2: Temporal Transformer ────────────────────────────────────
+        # Fuse weather summary into the tabular token, then add timestep_pos.
+        temporal_tokens = tab_emb + weather_summary + self.timestep_pos[None, :, :]
+
+        temporal_out = self.temporal_transformer(temporal_tokens)  # (B, T, D)
+
+        # ── Prediction head ──────────────────────────────────────────────────
+        future_out = temporal_out[:, self.S:, :]   # (B, 24, D)
+        pred_norm  = self.head(future_out)          # (B, 24, Z)
+
+        return self._denorm(pred_norm)              # (B, 24, Z)  raw MWh
+
+
 # ─── Factory ─────────────────────────────────────────────────────────────────
 
-def get_model(metadata: dict = None) -> HybridCNNTransformer:
+def get_model(metadata: dict = None) -> nn.Module:
     """
-    Build and return a HybridCNNTransformer.
+    Build and return a model determined by config["model_type"].
 
     When called by evaluate.py, `metadata` contains:
         {"n_zones": 8, "n_weather_vars": 7, "history_len": 168,
@@ -339,4 +565,52 @@ def get_model(metadata: dict = None) -> HybridCNNTransformer:
             if src in metadata:
                 cfg[dst] = metadata[src]
 
+    model_type = cfg.get("model_type", "hybrid")
+    if model_type == "hierarchical":
+        return HierarchicalCNNTransformer(cfg)
     return HybridCNNTransformer(cfg)
+
+
+# ─── Smoke test ───────────────────────────────────────────────────────────────
+
+if __name__ == "__main__":
+    mini_cfg = {
+        "S": 24,
+        "Z": 8,
+        "C": 7,
+        "D": 64,
+        "grid_size": 3,
+        "P": 9,
+        "num_calendar_features": 8,
+        "cnn_channels": [16, 32],
+        "num_heads": 4,
+        "transformer_dropout": 0.0,
+        "mlp_hidden_dim": 64,
+        "num_transformer_layers": 2,   # kept for HybridCNNTransformer compat
+        "spatial_layers": 1,
+        "temporal_layers": 2,
+        "model_type": "hierarchical",
+    }
+
+    B, G, S, C, Z, F = 2, 3, 24, 7, 8, 8
+
+    hier = HierarchicalCNNTransformer(mini_cfg)
+    hier.eval()
+
+    with torch.no_grad():
+        out = hier(
+            torch.randn(B, S,  G, G, C),   # hist_weather
+            torch.randn(B, S,  Z),          # hist_demand
+            torch.randn(B, S,  F),          # hist_calendar
+            torch.randn(B, 24, G, G, C),   # future_weather
+            torch.randn(B, 24, F),          # future_calendar
+            torch.randn(B, 24, Z),          # future_demand_lag
+        )
+    print(f"Output shape: {tuple(out.shape)}")   # expected (2, 24, 8)
+
+    hybrid = HybridCNNTransformer(mini_cfg)
+
+    n_hier   = sum(p.numel() for p in hier.parameters()   if p.requires_grad)
+    n_hybrid = sum(p.numel() for p in hybrid.parameters() if p.requires_grad)
+    print(f"HierarchicalCNNTransformer params: {n_hier:,}")
+    print(f"HybridCNNTransformer params:       {n_hybrid:,}")
